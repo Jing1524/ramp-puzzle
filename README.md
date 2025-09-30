@@ -3,40 +3,34 @@
 This repository documents my approach to the Ramp frontend take-home puzzle.  
 It is structured in two parts:
 
-- **Part 1 — Puzzle Decoding:** Solving the initial DOM/CTF-style puzzle and extracting the token.  
-- **Part 2 — CTF + Typewriter Puzzle:** Building the required React app using the decoded token.
+- **Part 1 — Puzzle Decoding:** Solving the initial Base64/DOM-style puzzle and extracting the token.  
+- **Part 2 — React Flag App:** Building the required React app using the decoded token.
 
 ---
 
 ## Part 1 — Puzzle Decoding
 
 ### Goal
-Identify and decode the hidden string provided in the challenge, producing a usable token/URL.
+Decode the hidden string provided in the challenge into a usable token/URL.
 
 ### Steps
-1. **Inspection:** Determined the string was Base64 (or Base64URL).
-2. **Padding/Validation:** Ensured proper padding (`=`) to make length divisible by 4 (Base64 length must be a multiple of 4. If it isn’t, append = until it is.)
-3. **Decoding:** Used environment tools:
-   - **Browser:** `atob("string")`
-   - **Node.js:** `Buffer.from("string", "base64").toString("utf8")` (the tool that i chose in the helper)
-   - **Python:** `base64.b64decode("string")`
+1. **Inspection:** Determined the string was Base64 (or Base64URL).  
+2. **Padding/Validation:** Ensured proper padding (`=`) so the length is divisible by 4.  
+3. **Decoding:** Tried multiple approaches:
+   - **Browser:** `atob("string")`  
+   - **Node.js:** `Buffer.from("string", "base64").toString("utf8")`  
+   - **Python:** `base64.b64decode("string")`  
+   - For reproducibility, I wrote a small helper script at [`/scripts/decode.ts`]
 
-4. ### How to run
-```bash
-# Install dev dependencies if needed
-npm install --save-dev ts-node typescript
-
-# Run the decoder
-npx ts-node decode.ts
-
-5: ### Solution Output
+### Solution Output
 Decoded string:
-# (output below — included here for completeness)
+#### (output below — included here for completeness)
 https://tns4lpgmziiypnxxzel5ss5nyu0nftol.lambda-url.us-east-1.on.aws/ramp-challenge-instructions/
 
 
-## Part 2 — Daily Calendar Challenge
+## Part 2 — React Flag App
 
+# Ramp Challenge
 ### Goal
 Use the decoded token from Part 1 to retrieve a flag from Ramp’s challenge endpoint and render it in a React application according to the given requirements.
 
@@ -45,20 +39,29 @@ Use the decoded token from Part 1 to retrieve a flag from Ramp’s challenge end
 - Show a `"Loading..."` state during fetch.  
 - Render the returned flag string:
   - As a list, where each character is a `<li>` element.  
-  - With a typewriter effect (½-second delay per character).  
+  - With a typewriter effect (1/2 second delay per character).  
   - The animation runs once, after loading finishes.  
 - Only use React and browser APIs — no external libraries for fetching or animation.  
 
 
 ### My Implementation
-- Wrote a small utility to parse events and assign them to columns using an interval-partitioning algorithm.  
-- Built a `useTypewriter` hook to reveal characters progressively.  
-- Added accessibility features (keyboard navigation + ARIA roles).  
-- Kept the styling minimal to focus on functionality.  
+- Built a small Typewriter component to progressively reveal characters.
+- Added a loading state with a short delay before rendering so that "Loading..." doesn’t flicker on very fast requests (a common UX polish).
+- Included basic error handling for failed requests.
+- Used an AbortController in useEffect cleanup to avoid setting state after unmount (under React 18 Strict Mode).
+- Kept styling minimal to focus on functionality.
+- Left a comment in the source with the DOM extraction one-liner (see top of app.tsx)
 
-### How to Run
-```bash
-npm install
-npm run dev
+### Bonus — DOM Extraction Script
+```js
+const url = [...document.querySelectorAll(
+  "section[data-id^='92'] article[data-class$='45'] div[data-tag*='78'] b.ref"
+)]
+  .map(el => el.getAttribute("value"))
+  .join("");
+
+console.log(url);
+copy?.(url); // optional, copies to clipboard in DevTools
+```
 
 
